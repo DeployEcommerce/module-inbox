@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Communication/etc/communication.xsd">
+    <!--
+        is_synchronous is declared explicitly rather than left to default. The XML converter
+        returns true when the attribute is absent and only corrects it to false further down
+        because this topic declares a request and no response. Relying on that ordering is
+        fragile; say what we mean.
+    -->
+    <topic name="deployecommerce.inbox.webhook.dispatch"
+           is_synchronous="false"
+           request="DeployEcommerce\Inbox\Api\Data\WebhookJobInterface"/>
+</config>

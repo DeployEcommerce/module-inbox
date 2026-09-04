@@ -1,0 +1,19 @@
+/*
+ * Icon for the top-level Inbox menu item.
+ *
+ * Magento's Admin Icons font has no envelope, tray or inbox among its 71 glyphs, so this
+ * uses a custom mark. It is applied as a mask rather than a background image: a mask is
+ * painted with background-color, so currentColor makes the icon inherit the menu's hover
+ * and active states exactly as a font glyph does. A background image would paint one fixed
+ * colour and sit dead through those states, which is what makes bespoke admin icons look
+ * bolted on.
+ *
+ * The base rule for a menu anchor already sets the icon font, size, height and spacing, so
+ * only the content and the mark itself are overridden here.
+ */
+.admin__menu .item-inbox > a:before {
+    content: '';
+    -webkit-mask: url('../images/inbox.svg') no-repeat center / 2.2rem 2.2rem;
+    mask: url('../images/inbox.svg') no-repeat center / 2.2rem 2.2rem;
+    background-color: currentColor;
+}

@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module-store:etc/config.xsd">
+    <default>
+        <deployecommerce_inbox>
+            <general>
+                <enabled>1</enabled>
+                <body_max_bytes>65536</body_max_bytes>
+                <secret_config_paths/>
+            </general>
+            <dedupe>
+                <!-- Off by default: every call records its own row until an administrator
+                     decides collapsing repeats is worth the loss of per-occurrence detail. -->
+                <enabled>0</enabled>
+                <window_hours>24</window_hours>
+            </dedupe>
+            <purge>
+                <enabled>1</enabled>
+                <schedule>0 3 * * *</schedule>
+                <retention_days>7</retention_days>
+                <batch_size>500</batch_size>
+                <max_runtime>60</max_runtime>
+                <window_end>6,0,0</window_end>
+                <pinned_warn_threshold>1000</pinned_warn_threshold>
+            </purge>
+            <retention>
+                <extended_severity_threshold>400</extended_severity_threshold>
+                <extended_retention_days>90</extended_retention_days>
+                <keep_unread>1</keep_unread>
+                <unread_max_days>365</unread_max_days>
+            </retention>
+            <writer>
+                <allow_never_delete_from_api>1</allow_never_delete_from_api>
+            </writer>
+            <escalation>
+                <enabled>0</enabled>
+                <severity_threshold>500</severity_threshold>
+                <period_hours>1</period_hours>
+                <sender>general</sender>
+            </escalation>
+            <webhook>
+                <enabled>0</enabled>
+                <connect_timeout>5</connect_timeout>
+                <timeout>10</timeout>
+                <severity_threshold>500</severity_threshold>
+                <!-- Bodies are not forwarded unless an administrator opts in. -->
+                <include_body>none</include_body>
+                <body_max_bytes>2048</body_max_bytes>
+                <max_attempts>6</max_attempts>
+                <retry_base_delay>60</retry_base_delay>
+            </webhook>
+        </deployecommerce_inbox>
+    </default>
+</config>

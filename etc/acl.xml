@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<!--
+    Both chains are copied verbatim from ancestors that exist in core, and were verified
+    against vendor/magento/module-backend/etc/acl.xml on this install. Re-declaring an
+    existing resource under a different but real ancestor produces a duplicate id in the
+    merged document and takes the ENTIRE admin down with a permissions error. A standalone
+    acl.xsd validation does not catch that; only reading the merged document does.
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Acl/etc/acl.xsd">
+    <acl>
+        <resources>
+            <resource id="Magento_Backend::admin">
+                <resource id="Magento_Backend::system">
+                    <resource id="DeployEcommerce_Inbox::inbox" title="Inbox" sortOrder="85">
+                        <resource id="DeployEcommerce_Inbox::message" title="View Messages" sortOrder="10">
+                            <resource id="DeployEcommerce_Inbox::message_status" title="Change Read Status" sortOrder="10"/>
+                            <resource id="DeployEcommerce_Inbox::message_pin" title="Pin and Unpin Messages" sortOrder="20"/>
+                            <resource id="DeployEcommerce_Inbox::message_delete" title="Delete Messages" sortOrder="30"/>
+                        </resource>
+                    </resource>
+                </resource>
+                <resource id="Magento_Backend::stores">
+                    <resource id="Magento_Backend::stores_settings">
+                        <resource id="Magento_Config::config">
+                            <resource id="DeployEcommerce_Inbox::config" title="Inbox Configuration" sortOrder="100"/>
+                        </resource>
+                    </resource>
+                </resource>
+            </resource>
+        </resources>
+    </acl>
+</config>

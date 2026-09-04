@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework-message-queue:etc/topology.xsd">
+    <exchange name="deployecommerce-inbox-exchange" type="topic" connection="db">
+        <binding id="DeployEcommerceInboxWebhookDispatch"
+                 topic="deployecommerce.inbox.webhook.dispatch"
+                 destinationType="queue"
+                 destination="deployecommerce_inbox_webhook"/>
+    </exchange>
+</config>

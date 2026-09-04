@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
+    <group id="deployecommerce_inbox">
+        <!--
+            The literal schedule is a fallback, not a duplicate of config_path. config_path
+            wins whenever it resolves to a non-empty value; without this element an
+            administrator who blanks the field stops the purge permanently, with no error
+            anywhere, because job generation skips any job whose expression is empty.
+
+            Element order is fixed by crontab.xsd: schedule before config_path.
+
+            03:00 rather than 02:00 keeps the purge clear of the overnight ERP sync window
+            that produces most of the rows it is about to delete.
+        -->
+        <job name="deployecommerce_inbox_purge"
+             instance="DeployEcommerce\Inbox\Cron\PurgeMessages"
+             method="execute">
+            <schedule>0 3 * * *</schedule>
+            <config_path>deployecommerce_inbox/purge/schedule</config_path>
+        </job>
+        <!--
+            The sweeper is what actually guarantees webhook delivery; the publish at write
+            time is only a fast path. Every minute, because a failed publish should not delay
+            an alert by more than that.
+        -->
+        <job name="deployecommerce_inbox_webhook_sweep"
+             instance="DeployEcommerce\Inbox\Cron\SweepWebhooks"
+             method="execute">
+            <schedule>* * * * *</schedule>
+        </job>
+        <job name="deployecommerce_inbox_webhook_health"
+             instance="DeployEcommerce\Inbox\Cron\CheckWebhookHealth"
+             method="execute">
+            <schedule>*/15 * * * *</schedule>
+        </job>
+        <!--
+            Hourly, matching the default reporting period. Change both together or messages
+            are reported twice or not at all.
+        -->
+        <job name="deployecommerce_inbox_escalation_digest"
+             instance="DeployEcommerce\Inbox\Cron\SendEscalationDigest"
+             method="execute">
+            <schedule>5 * * * *</schedule>
+        </job>
+    </group>
+</config>

@@ -1,0 +1,56 @@
+<div class="de-inbox-modal-body">
+    <!-- ko if: loading -->
+    <div class="admin__data-grid-loading-mask"><div class="spinner"></div></div>
+    <!-- /ko -->
+
+    <!-- ko if: error -->
+    <div class="message message-error" data-bind="text: error"></div>
+    <!-- /ko -->
+
+    <!-- ko ifnot: loading() || error() -->
+    <div class="de-inbox-meta">
+        <h2 class="de-inbox-title" data-bind="text: title"></h2>
+        <ul class="de-inbox-facts">
+            <li><span data-bind="i18n: 'Severity'"></span>: <strong data-bind="text: severityLabel"></strong></li>
+            <li><span data-bind="i18n: 'Source'"></span>: <strong data-bind="text: source"></strong></li>
+            <li><span data-bind="i18n: 'Created'"></span>: <strong data-bind="text: createdAt"></strong></li>
+            <!-- ko if: occurrences() > 1 -->
+            <li><span data-bind="i18n: 'Occurrences'"></span>: <strong data-bind="text: occurrences"></strong>
+                (<span data-bind="i18n: 'last seen'"></span> <span data-bind="text: lastSeenAt"></span>)</li>
+            <!-- /ko -->
+            <!-- ko if: neverDelete -->
+            <li class="de-inbox-pinned" data-bind="i18n: 'Kept indefinitely'"></li>
+            <!-- /ko -->
+        </ul>
+        <!-- ko if: tags().length -->
+        <div class="de-inbox-tags" data-bind="foreach: tags">
+            <span class="de-inbox-chip" data-bind="text: $data"></span>
+        </div>
+        <!-- /ko -->
+    </div>
+
+    <div class="de-inbox-body-actions">
+        <button type="button" class="action-secondary" data-bind="click: copyBody, visible: body()">
+            <span data-bind="i18n: 'Copy'"></span>
+        </button>
+        <button type="button" class="action-secondary" data-bind="click: markUnread">
+            <span data-bind="i18n: 'Mark as Unread'"></span>
+        </button>
+        <!-- ko if: copied -->
+        <span class="de-inbox-copied" data-bind="i18n: 'Copied'"></span>
+        <!-- /ko -->
+    </div>
+
+    <!-- ko if: truncated -->
+    <div class="message message-warning">
+        <span data-bind="i18n: 'This message is too large to display in full. Showing the first part only.'"></span>
+    </div>
+    <!-- /ko -->
+
+    <!--
+        text binding, never html. The body is third-party content and may contain markup;
+        text sets textContent so the browser never parses it. Do not change this to html.
+    -->
+    <pre class="de-inbox-body" data-bind="text: body"></pre>
+    <!-- /ko -->
+</div>

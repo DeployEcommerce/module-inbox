@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework-message-queue:etc/consumer.xsd">
+    <!--
+        maxMessages caps how long one run can occupy a worker: with a 10 second request
+        timeout, a slow endpoint makes each message expensive. Raising this does not increase
+        throughput, it only lengthens a single run; use multiple_processes in env.php instead.
+    -->
+    <consumer name="DeployEcommerceInboxWebhookDispatch"
+              queue="deployecommerce_inbox_webhook"
+              connection="db"
+              maxMessages="500"
+              onlySpawnWhenMessageAvailable="true"
+              handler="DeployEcommerce\Inbox\Model\Webhook\DispatchConsumer::process"/>
+</config>

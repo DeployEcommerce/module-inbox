@@ -1,0 +1,64 @@
+.de-inbox-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    line-height: 1.6rem;
+    white-space: nowrap;
+    background: #e5e5e5;
+    color: #333;
+}
+.de-inbox-badge-debug,
+.de-inbox-badge-info { background: #e8f1f8; color: #12547d; }
+.de-inbox-badge-notice { background: #e5f3e5; color: #16643a; }
+.de-inbox-badge-warning { background: #fdf0d5; color: #8a5c00; }
+.de-inbox-badge-error { background: #fbe5e5; color: #a02020; }
+.de-inbox-badge-critical,
+.de-inbox-badge-alert,
+.de-inbox-badge-emergency { background: #a02020; color: #fff; }
+
+/*
+ * Tag chips.
+ *
+ * The chip is outlined rather than relying on its fill for separation. Admin grid rows
+ * alternate #ffffff and #f5f5f5 and turn pale blue on hover, so no light fill can contrast
+ * with all three: the previous #f0f0f0 sat between the two row colours and measured
+ * 1.02:1 against the hover row, which is invisible. The border carries the edge instead,
+ * at 3.1:1 against every row state.
+ *
+ * Deliberately quiet: tags are secondary metadata and must not compete with the severity
+ * badge, which is the first thing that should be read in a row.
+ */
+.de-inbox-chip {
+    display: inline-block;
+    margin: 0 4px 2px 0;
+    padding: 0 6px;
+    border: 1px solid #7f8b9b;
+    border-radius: 9px;
+    background: #e4e9ef;
+    color: #26303c;
+    font-size: 1.1rem;
+    line-height: 1.7rem;
+}
+
+.de-inbox-title { margin: 0 0 10px; font-size: 1.9rem; }
+.de-inbox-facts { margin: 0 0 10px; padding: 0; list-style: none; }
+.de-inbox-facts li { display: inline-block; margin-right: 18px; color: #666; }
+.de-inbox-pinned { color: #8a5c00; font-weight: 600; }
+.de-inbox-body-actions { margin: 12px 0; }
+.de-inbox-copied { margin-left: 10px; color: #16643a; font-weight: 600; }
+
+/* Bodies are stack traces and JSON payloads: preserve whitespace, wrap long lines, and
+   scroll rather than pushing the modal wider than the viewport. */
+.de-inbox-body {
+    max-height: 60vh;
+    overflow: auto;
+    padding: 12px;
+    background: #f8f8f8;
+    border: 1px solid #e3e3e3;
+    border-radius: 3px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: Menlo, Consolas, monospace;
+    font-size: 1.2rem;
+}

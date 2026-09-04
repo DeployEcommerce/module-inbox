@@ -1,0 +1,20 @@
+<!--@subject {{trans "%count high severity integration message(s) need attention" count=$count}} @-->
+<!--@vars {
+"var count":"Number of messages",
+"var period_hours":"Reporting period in hours",
+"var grid_url":"Link to the inbox",
+"var rows":"Message summaries"
+} @-->
+{{template config_path="design/email/header_template"}}
+
+<p>{{trans "%count integration message(s) at or above the escalation severity were recorded in the last %hours hour(s)." count=$count hours=$period_hours}}</p>
+
+{{var rows|raw}}
+
+<p><a href="{{var grid_url}}">{{trans "Open the Integration Inbox"}}</a></p>
+
+<p style="color:#888;font-size:12px;">
+    {{trans "Message bodies are not included in this email. Open the inbox to see the full detail."}}
+</p>
+
+{{template config_path="design/email/footer_template"}}

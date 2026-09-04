@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+    <!--
+        Envelope for the Inbox menu item.
+
+        Drawn as a filled silhouette with the flap punched out via fill-rule="evenodd",
+        rather than as an outline, so its visual mass matches Magento's own admin icons,
+        which are all solid shapes. An outlined version reads noticeably lighter than its
+        neighbours in the sidebar.
+
+        The colour here is irrelevant: the CSS uses this file as a mask and paints it with
+        currentColor, so the icon follows the menu's hover and active states.
+    -->
+    <path fill="#000" fill-rule="evenodd" d="M4.6 4.4h14.8a2.6 2.6 0 0 1 2.6 2.6v10a2.6 2.6 0 0 1-2.6 2.6H4.6A2.6 2.6 0 0 1 2 17V7a2.6 2.6 0 0 1 2.6-2.6Zm-.3 3 7.7 6 7.7-6v2.7l-7.7 6-7.7-6Z"/>
+</svg>

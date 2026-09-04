@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<!--
+    Loaded on every admin page because the menu is rendered on every admin page. The file
+    is a single rule, so the cost of that is negligible.
+-->
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <head>
+        <css src="DeployEcommerce_Inbox::css/menu.css"/>
+    </head>
+</page>

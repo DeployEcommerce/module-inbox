@@ -1,0 +1,64 @@
+{
+    "deployecommerce_inbox_message": {
+        "column": {
+            "message_id": true,
+            "severity": true,
+            "is_read": true,
+            "never_delete": true,
+            "source": true,
+            "title": true,
+            "body": true,
+            "dedupe_hash": true,
+            "occurrences": true,
+            "read_by_admin_id": true,
+            "read_at": true,
+            "created_at": true,
+            "last_seen_at": true
+        },
+        "index": {
+            "DEPLOYECOMMERCE_INBOX_MESSAGE_NEVER_DELETE_SEVERITY_LAST_SEEN_AT": true,
+            "DEPLOYECOMMERCE_INBOX_MESSAGE_CREATED_AT": true,
+            "DEPLOYECOMMERCE_INBOX_MESSAGE_IS_READ_CREATED_AT": true,
+            "DEPLOYECOMMERCE_INBOX_MESSAGE_SOURCE_CREATED_AT": true,
+            "DEPLOYECOMMERCE_INBOX_MESSAGE_DEDUPE_HASH_CREATED_AT": true
+        },
+        "constraint": {
+            "PRIMARY": true
+        }
+    },
+    "deployecommerce_inbox_message_tag": {
+        "column": {
+            "message_id": true,
+            "tag": true
+        },
+        "index": {
+            "DEPLOYECOMMERCE_INBOX_MESSAGE_TAG_TAG_MESSAGE_ID": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "FK_32D830C1F86E51A8698A139246DE7C3B": true
+        }
+    },
+    "deployecommerce_inbox_webhook_attempt": {
+        "column": {
+            "message_id": true,
+            "status": true,
+            "attempts": true,
+            "delivery_uuid": true,
+            "occurrence_no": true,
+            "next_attempt_at": true,
+            "last_attempt_at": true,
+            "last_http_status": true,
+            "last_error": true,
+            "created_at": true
+        },
+        "index": {
+            "DEPLOYECOMMERCE_INBOX_WEBHOOK_ATTEMPT_STATUS_NEXT_ATTEMPT_AT": true,
+            "DEPLOYECOMMERCE_INBOX_WEBHOOK_ATTEMPT_CREATED_AT": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "FK_D0E7A9879832EA57389F24C7FAAFA5F0": true
+        }
+    }
+}

@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <!--
+            Top-level, at 65: between Reports (60) and Stores (70). The inbox is an
+            operational surface people check rather than work in, so it sits with the
+            monitoring items instead of competing with Sales and Catalog.
+
+            The id determines the CSS class used to give it an icon. Magento renders
+            "item-" plus the portion after "::", lowercased with underscores hyphenated,
+            so DeployEcommerce_Inbox::inbox becomes .item-inbox. Renaming this id silently
+            drops the icon.
+        -->
+        <add id="DeployEcommerce_Inbox::inbox"
+             title="Inbox"
+             translate="title"
+             module="DeployEcommerce_Inbox"
+             sortOrder="65"
+             resource="DeployEcommerce_Inbox::inbox"/>
+
+        <add id="DeployEcommerce_Inbox::message"
+             title="Messages"
+             translate="title"
+             module="DeployEcommerce_Inbox"
+             sortOrder="10"
+             parent="DeployEcommerce_Inbox::inbox"
+             action="deployecommerce_inbox/message/index"
+             resource="DeployEcommerce_Inbox::message"/>
+
+        <add id="DeployEcommerce_Inbox::config_link"
+             title="Configuration"
+             translate="title"
+             module="DeployEcommerce_Inbox"
+             sortOrder="20"
+             parent="DeployEcommerce_Inbox::inbox"
+             action="adminhtml/system_config/edit/section/deployecommerce_inbox"
+             resource="DeployEcommerce_Inbox::config"/>
+    </menu>
+</config>

@@ -1,0 +1,138 @@
+<?xml version="1.0"?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+
+    <table name="deployecommerce_inbox_message" resource="default" engine="innodb"
+           comment="DeployEcommerce Inbox Messages">
+        <column xsi:type="bigint" name="message_id" unsigned="true" nullable="false" identity="true"
+                comment="Message ID"/>
+        <column xsi:type="smallint" name="severity" unsigned="true" nullable="false" default="400"
+                comment="Monolog level value: 100 Debug to 600 Emergency"/>
+        <column xsi:type="smallint" name="is_read" unsigned="true" nullable="false" default="0"
+                comment="0 unread, 1 read. Global, not per admin user"/>
+        <column xsi:type="smallint" name="never_delete" unsigned="true" nullable="false" default="0"
+                comment="1 exempts the row from every retention rule in the purge cron"/>
+        <column xsi:type="varchar" name="source" length="128" nullable="false" default="unknown"
+                comment="Originating module or integration, lowercased"/>
+        <column xsi:type="varchar" name="title" length="500" nullable="false"
+                comment="Short message. Truncated to 500 chars by the writer, never rejected"/>
+        <column xsi:type="mediumtext" name="body" nullable="true"
+                comment="Full detail. Redacted and size-capped by the writer"/>
+        <column xsi:type="varchar" name="dedupe_hash" length="64" nullable="true"
+                comment="sha256(source|severity|normalised title). Null when dedupe is disabled"/>
+        <column xsi:type="int" name="occurrences" unsigned="true" nullable="false" default="1"
+                comment="Number of times this message has been seen within the dedupe window"/>
+        <column xsi:type="int" name="read_by_admin_id" unsigned="true" nullable="true"
+                comment="admin_user.user_id that last marked this read. Audit only, deliberately no FK"/>
+        <column xsi:type="timestamp" name="read_at" on_update="false" nullable="true"
+                comment="When it was marked read"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false"
+                default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <column xsi:type="timestamp" name="last_seen_at" on_update="false" nullable="true"
+                comment="Last occurrence. Purge compares against this, not created_at"/>
+
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="message_id"/>
+        </constraint>
+
+        <!--
+            Purge index. Column order is load-bearing: the two equality predicates lead, the
+            range predicate trails. MySQL stops using index columns at the first range column,
+            so last_seen_at must be last or it degrades to a post-filter.
+            Explicit referenceId because the generated name would exceed the 64-char cap.
+        -->
+        <index referenceId="DE_INBOX_MSG_PURGE" indexType="btree">
+            <column name="never_delete"/>
+            <column name="severity"/>
+            <column name="last_seen_at"/>
+        </index>
+        <index referenceId="DE_INBOX_MSG_CREATED_AT" indexType="btree">
+            <column name="created_at"/>
+        </index>
+        <index referenceId="DE_INBOX_MSG_IS_READ_CREATED_AT" indexType="btree">
+            <column name="is_read"/>
+            <column name="created_at"/>
+        </index>
+        <index referenceId="DE_INBOX_MSG_SOURCE_CREATED_AT" indexType="btree">
+            <column name="source"/>
+            <column name="created_at"/>
+        </index>
+        <!--
+            Deliberately not unique: a unique key would collapse a January incident into a
+            June one forever. The dedupe window is applied as a range on created_at.
+        -->
+        <index referenceId="DE_INBOX_MSG_DEDUPE_HASH_CREATED_AT" indexType="btree">
+            <column name="dedupe_hash"/>
+            <column name="created_at"/>
+        </index>
+    </table>
+
+    <table name="deployecommerce_inbox_message_tag" resource="default" engine="innodb"
+           comment="DeployEcommerce Inbox Message Tags">
+        <column xsi:type="bigint" name="message_id" unsigned="true" nullable="false"
+                comment="Message ID"/>
+        <column xsi:type="varchar" name="tag" length="32" nullable="false"
+                comment="Normalised tag slug, lowercase a-z0-9_-"/>
+
+        <!-- Composite PK, no surrogate id: clusters a parent's tags contiguously so the
+             cascade delete is a range rather than scattered row lookups. -->
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="message_id"/>
+            <column name="tag"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="DE_INBOX_MSG_TAG_MSG_ID"
+                    table="deployecommerce_inbox_message_tag" column="message_id"
+                    referenceTable="deployecommerce_inbox_message" referenceColumn="message_id"
+                    onDelete="CASCADE"/>
+        <index referenceId="DE_INBOX_MSG_TAG_TAG_MSG_ID" indexType="btree">
+            <column name="tag"/>
+            <column name="message_id"/>
+        </index>
+    </table>
+    <!--
+        Transactional outbox for webhook forwarding. This row, not the queue message, is the
+        source of truth: it is written in the same transaction as the message itself, so it
+        rolls back with the message and can never reference a row that does not exist. The
+        queue publish is a best-effort fast path; a sweeper cron picks up anything it missed.
+    -->
+    <table name="deployecommerce_inbox_webhook_attempt" resource="default" engine="innodb"
+           comment="DeployEcommerce Inbox Webhook Delivery Attempts">
+        <column xsi:type="bigint" name="message_id" unsigned="true" nullable="false"
+                comment="Message ID"/>
+        <column xsi:type="varchar" name="status" length="16" nullable="false" default="pending"
+                comment="pending, sending, delivered, failed or abandoned"/>
+        <column xsi:type="smallint" name="attempts" unsigned="true" nullable="false" default="0"
+                comment="Delivery attempts made so far"/>
+        <column xsi:type="varchar" name="delivery_uuid" length="36" nullable="false"
+                comment="Stable across retries so the receiver can deduplicate"/>
+        <column xsi:type="int" name="occurrence_no" unsigned="true" nullable="false" default="1"
+                comment="Occurrence count that triggered this delivery"/>
+        <column xsi:type="timestamp" name="next_attempt_at" on_update="false" nullable="true"
+                comment="When the sweeper may next publish this. Null once terminal"/>
+        <column xsi:type="timestamp" name="last_attempt_at" on_update="false" nullable="true"
+                comment="When the last attempt was made"/>
+        <column xsi:type="smallint" name="last_http_status" unsigned="true" nullable="true"
+                comment="HTTP status of the last attempt"/>
+        <column xsi:type="varchar" name="last_error" length="255" nullable="true"
+                comment="Redacted excerpt of the last failure"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false"
+                default="CURRENT_TIMESTAMP" comment="Created At"/>
+
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="message_id"/>
+        </constraint>
+        <!-- Cascade: a purged message must not leave a delivery attempt behind. -->
+        <constraint xsi:type="foreign" referenceId="DE_INBOX_WH_MSG_ID"
+                    table="deployecommerce_inbox_webhook_attempt" column="message_id"
+                    referenceTable="deployecommerce_inbox_message" referenceColumn="message_id"
+                    onDelete="CASCADE"/>
+        <!-- Drives the sweeper: equality on status, range on next_attempt_at, range column last. -->
+        <index referenceId="DE_INBOX_WH_STATUS_NEXT_ATTEMPT" indexType="btree">
+            <column name="status"/>
+            <column name="next_attempt_at"/>
+        </index>
+        <index referenceId="DE_INBOX_WH_CREATED_AT" indexType="btree">
+            <column name="created_at"/>
+        </index>
+    </table>
+</schema>

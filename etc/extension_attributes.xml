@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<!--
+    Declared from v1 with no attributes. Adding getExtensionAttributes()/setExtensionAttributes()
+    to a published interface later is a backwards-compatibility break; declaring them now is free
+    and lets consuming modules attach data without a schema change here.
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Api/etc/extension_attributes.xsd">
+    <extension_attributes for="DeployEcommerce\Inbox\Api\Data\MessageInterface"/>
+</config>

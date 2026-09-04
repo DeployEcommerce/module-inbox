@@ -1,0 +1,117 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+
+    <preference for="DeployEcommerce\Inbox\Api\Data\MessageInterface"
+                type="DeployEcommerce\Inbox\Model\Message"/>
+    <preference for="DeployEcommerce\Inbox\Api\Data\MessageSearchResultsInterface"
+                type="Magento\Framework\Api\SearchResults"/>
+    <preference for="DeployEcommerce\Inbox\Api\MessageRepositoryInterface"
+                type="DeployEcommerce\Inbox\Model\MessageRepository"/>
+    <preference for="DeployEcommerce\Inbox\Api\InboxWriterInterface"
+                type="DeployEcommerce\Inbox\Model\InboxWriter"/>
+    <preference for="DeployEcommerce\Inbox\Api\Data\WebhookJobInterface"
+                type="DeployEcommerce\Inbox\Model\Webhook\WebhookJob"/>
+
+    <!--
+        A dedicated log file rather than system.log. The purge and the webhook sweeper are
+        chatty enough to drown an already busy shared log, and having one documented file
+        makes "which log do I watch" answerable.
+    -->
+    <virtualType name="DeployEcommerce\Inbox\Logger\Handler"
+                 type="Magento\Framework\Logger\Handler\Base">
+        <arguments>
+            <argument name="fileName" xsi:type="string">/var/log/deployecommerce_inbox.log</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="DeployEcommerce\Inbox\Logger" type="Magento\Framework\Logger\Monolog">
+        <arguments>
+            <argument name="name" xsi:type="string">deployecommerce_inbox</argument>
+            <argument name="handlers" xsi:type="array">
+                <item name="system" xsi:type="object">DeployEcommerce\Inbox\Logger\Handler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!--
+        The webhook subsystem logs to its own file. Keeping it separate from the writer's
+        channel is structural, not cosmetic: it guarantees a webhook failure can never be
+        routed back into the inbox and trigger another webhook.
+    -->
+    <virtualType name="DeployEcommerce\Inbox\Logger\WebhookHandler"
+                 type="Magento\Framework\Logger\Handler\Base">
+        <arguments>
+            <argument name="fileName" xsi:type="string">/var/log/deployecommerce_inbox_webhook.log</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="DeployEcommerce\Inbox\Logger\Webhook" type="Magento\Framework\Logger\Monolog">
+        <arguments>
+            <argument name="name" xsi:type="string">deployecommerce_inbox_webhook</argument>
+            <argument name="handlers" xsi:type="array">
+                <item name="system" xsi:type="object">DeployEcommerce\Inbox\Logger\WebhookHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <type name="DeployEcommerce\Inbox\Model\InboxWriter">
+        <arguments>
+            <argument name="logger" xsi:type="object">DeployEcommerce\Inbox\Logger</argument>
+        </arguments>
+    </type>
+    <type name="DeployEcommerce\Inbox\Model\TagNormalizer">
+        <arguments>
+            <argument name="logger" xsi:type="object">DeployEcommerce\Inbox\Logger</argument>
+        </arguments>
+    </type>
+    <type name="DeployEcommerce\Inbox\Cron\PurgeMessages">
+        <arguments>
+            <argument name="logger" xsi:type="object">DeployEcommerce\Inbox\Logger</argument>
+        </arguments>
+    </type>
+    <type name="DeployEcommerce\Inbox\Cron\SendEscalationDigest">
+        <arguments>
+            <argument name="logger" xsi:type="object">DeployEcommerce\Inbox\Logger</argument>
+        </arguments>
+    </type>
+    <type name="DeployEcommerce\Inbox\Model\Webhook\DispatchConsumer">
+        <arguments>
+            <argument name="logger" xsi:type="object">DeployEcommerce\Inbox\Logger\Webhook</argument>
+        </arguments>
+    </type>
+    <type name="DeployEcommerce\Inbox\Model\Webhook\Publisher">
+        <arguments>
+            <argument name="logger" xsi:type="object">DeployEcommerce\Inbox\Logger\Webhook</argument>
+        </arguments>
+    </type>
+    <type name="DeployEcommerce\Inbox\Cron\SweepWebhooks">
+        <arguments>
+            <argument name="logger" xsi:type="object">DeployEcommerce\Inbox\Logger\Webhook</argument>
+        </arguments>
+    </type>
+    <type name="DeployEcommerce\Inbox\Cron\CheckWebhookHealth">
+        <arguments>
+            <argument name="logger" xsi:type="object">DeployEcommerce\Inbox\Logger\Webhook</argument>
+        </arguments>
+    </type>
+
+    <!--
+        Grid collection. A real class rather than a virtualType because the listing needs
+        three things a bare SearchResult cannot do: exclude the body column, join the tag
+        table, and rewrite a tag filter into an EXISTS subquery.
+    -->
+    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
+        <arguments>
+            <argument name="collections" xsi:type="array">
+                <item name="deployecommerce_inbox_message_listing_data_source" xsi:type="string">DeployEcommerce\Inbox\Model\ResourceModel\Message\Grid\Collection</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <type name="Magento\Framework\Console\CommandListInterface">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="deployecommerce_inbox_demo_data" xsi:type="object">DeployEcommerce\Inbox\Console\Command\DemoDataCommand</item>
+            </argument>
+        </arguments>
+    </type>
+</config>

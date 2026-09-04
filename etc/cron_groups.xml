@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/cron_groups.xsd">
+    <!--
+        A dedicated group rather than default, for three concrete reasons:
+
+        1. schedule_lifetime in default is 15 minutes. A nightly job that starts 16 minutes
+           late is marked missed and does not run for another 24 hours, and the misses
+           compound.
+        2. history_success_lifetime in default is 60 minutes, so a 03:00 success row is gone
+           by 04:00 and "did the purge run last night?" becomes unanswerable.
+        3. Not reusing an existing project group keeps the module portable: a group belonging
+           to another vendor's module would orphan these jobs wherever that module is absent.
+    -->
+    <group id="deployecommerce_inbox">
+        <schedule_generate_every>15</schedule_generate_every>
+        <schedule_ahead_for>60</schedule_ahead_for>
+        <schedule_lifetime>120</schedule_lifetime>
+        <history_cleanup_every>60</history_cleanup_every>
+        <history_success_lifetime>43200</history_success_lifetime>
+        <history_failure_lifetime>43200</history_failure_lifetime>
+        <!--
+            Zero deliberately. Groups running in a separate process sort ahead of the rest,
+            and the call blocks, so enabling it would put this group in front of every other
+            group on each cron run rather than running it in parallel.
+        -->
+        <use_separate_process>0</use_separate_process>
+    </group>
+</config>

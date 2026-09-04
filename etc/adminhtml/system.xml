@@ -1,0 +1,291 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <!--
+            The tab is self-declared so the module stays self-contained: installed on a site
+            with no other DeployEcommerce module, the section would otherwise be orphaned.
+            Several modules declaring the same tab id is supported and expected.
+        -->
+        <tab id="deploy_ecommerce" translate="label" sortOrder="400">
+            <label>Deploy Ecommerce</label>
+        </tab>
+        <!--
+            Default scope throughout. Messages carry no store id and the purge is a single
+            global delete, so a website- or store-scoped value could never be honoured; a
+            field offering a scope the runtime ignores is dead configuration.
+        -->
+        <section id="deployecommerce_inbox" translate="label" type="text" sortOrder="10"
+                 showInDefault="1" showInWebsite="0" showInStore="0">
+            <label>Inbox</label>
+            <tab>deploy_ecommerce</tab>
+            <resource>DeployEcommerce_Inbox::config</resource>
+
+            <group id="general" translate="label" type="text" sortOrder="10"
+                   showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>General</label>
+                <field id="enabled" translate="label comment" type="select" sortOrder="10"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Enable Inbox</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[When No, calls to the inbox are discarded and recorded in the module log instead. Existing messages remain readable.]]></comment>
+                </field>
+                <field id="body_max_bytes" translate="label comment" type="text" sortOrder="20"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Maximum Body Size (bytes)</label>
+                    <validate>required-entry validate-digits validate-digits-range digits-range-1024-4194304</validate>
+                    <comment><![CDATA[Longer bodies are truncated with a marker. The column itself holds far more, but a full stack trace can exceed the database packet limit.]]></comment>
+                </field>
+                <field id="secret_config_paths" translate="label comment" type="textarea" sortOrder="30"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Credential Configuration Paths</label>
+                    <comment><![CDATA[One configuration path per line, for example <code>integration_erp/api/consumer_secret</code>. The live value of each is masked wherever it appears in a message body, catching credentials that the built-in patterns do not recognise.]]></comment>
+                </field>
+            </group>
+
+            <group id="dedupe" translate="label" type="text" sortOrder="20"
+                   showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Deduplication</label>
+                <field id="enabled" translate="label comment" type="select" sortOrder="10"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Collapse Repeated Messages</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[When Yes, a repeat of the same source, severity and title increments an occurrence counter instead of adding a row. Off by default, so every call is recorded separately. Turn it on if an integration floods the grid: a fault recurring every minute for three days produces around 4,300 rows otherwise.]]></comment>
+                </field>
+                <field id="window_hours" translate="label comment" type="text" sortOrder="20"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Deduplication Window (hours)</label>
+                    <validate>required-entry validate-digits validate-digits-range digits-range-1-720</validate>
+                    <comment><![CDATA[A repeat seen after this long starts a new message, so a fault that returns having been fixed reads as a separate incident.]]></comment>
+                    <depends><field id="enabled">1</field></depends>
+                </field>
+            </group>
+
+            <group id="purge" translate="label" type="text" sortOrder="30"
+                   showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Automatic Cleanup</label>
+                <field id="enabled" translate="label comment" type="select" sortOrder="10"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Enable Nightly Purge</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[The job still runs on schedule when this is No; it exits immediately without deleting anything.]]></comment>
+                </field>
+                <field id="schedule" translate="label comment" type="text" sortOrder="20"
+                       showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
+                    <label>Purge Schedule</label>
+                    <backend_model>DeployEcommerce\Inbox\Model\Config\Backend\CronExpression</backend_model>
+                    <comment><![CDATA[Standard five-field cron expression, default <code>0 3 * * *</code>. Keep it overnight and after your integration sync window. Leave blank to use the module default.]]></comment>
+                    <depends><field id="enabled">1</field></depends>
+                </field>
+                <field id="retention_days" translate="label comment" type="text" sortOrder="30"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Retention (days)</label>
+                    <validate>required-entry validate-digits validate-digits-range digits-range-1-3650</validate>
+                    <comment><![CDATA[Baseline age at which messages are deleted, for severities below the extended threshold.]]></comment>
+                    <depends><field id="enabled">1</field></depends>
+                </field>
+                <field id="batch_size" translate="label comment" type="text" sortOrder="40"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Delete Batch Size</label>
+                    <validate>required-entry validate-digits validate-digits-range digits-range-100-10000</validate>
+                    <comment><![CDATA[Messages deleted per statement. Each also removes its tag rows, so the real row count per batch is higher.]]></comment>
+                    <depends><field id="enabled">1</field></depends>
+                </field>
+                <field id="max_runtime" translate="label comment" type="text" sortOrder="50"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Maximum Run Time (minutes)</label>
+                    <validate>required-entry validate-digits validate-digits-range digits-range-1-360</validate>
+                    <comment><![CDATA[The purge stops cleanly at this point and resumes on the next run.]]></comment>
+                    <depends><field id="enabled">1</field></depends>
+                </field>
+                <field id="window_end" translate="label comment" type="time" sortOrder="60"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Stop Purging At</label>
+                    <comment><![CDATA[Wall-clock stop in the store's timezone, alongside the runtime limit. Needed because a job that starts hours late still gets its full budget and would otherwise run into business hours.]]></comment>
+                    <depends><field id="enabled">1</field></depends>
+                </field>
+                <field id="pinned_warn_threshold" translate="label comment" type="text" sortOrder="70"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Pinned Message Warning Threshold</label>
+                    <validate>validate-digits validate-digits-range digits-range-0-1000000</validate>
+                    <comment><![CDATA[Messages marked never-delete are exempt from every retention rule and accumulate indefinitely. A warning is logged once the count passes this number. Set to 0 to disable.]]></comment>
+                </field>
+            </group>
+
+            <group id="retention" translate="label" type="text" sortOrder="40"
+                   showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Retention by Severity</label>
+                <field id="extended_severity_threshold" translate="label comment" type="select" sortOrder="10"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Extended Retention From Severity</label>
+                    <source_model>DeployEcommerce\Inbox\Model\Config\Source\Severity</source_model>
+                    <comment><![CDATA[Messages at or above this severity are kept for the extended period instead of the baseline. Serious integration failures are often investigated weeks later.]]></comment>
+                </field>
+                <field id="extended_retention_days" translate="label" type="text" sortOrder="20"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Extended Retention (days)</label>
+                    <validate>required-entry validate-digits validate-digits-range digits-range-1-3650</validate>
+                </field>
+                <field id="keep_unread" translate="label comment" type="select" sortOrder="30"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Keep Unread Messages Longer</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[Unread messages survive their normal retention age, up to the cap below, because nobody has seen them yet.]]></comment>
+                </field>
+                <field id="unread_max_days" translate="label comment" type="text" sortOrder="40"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Unread Message Cap (days)</label>
+                    <validate>required-entry validate-digits validate-digits-range digits-range-1-3650</validate>
+                    <comment><![CDATA[Deliberately finite. Unread is the default state, so an uncapped rule would keep the table growing forever.]]></comment>
+                    <depends><field id="keep_unread">1</field></depends>
+                </field>
+            </group>
+
+            <group id="writer" translate="label" type="text" sortOrder="50"
+                   showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Integration Writes</label>
+                <field id="allow_never_delete_from_api" translate="label comment" type="select" sortOrder="10"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Allow Integrations To Pin Messages</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[When No, the never-delete flag passed by calling code is ignored and only an administrator can pin a message. Turn this off if an integration starts pinning in a loop.]]></comment>
+                </field>
+            </group>
+
+
+            <group id="escalation" translate="label comment" type="text" sortOrder="55"
+                   showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Email Escalation</label>
+                <comment><![CDATA[An inbox only works when somebody opens it. This emails a digest of serious messages so a failure overnight does not wait until someone happens to log in.]]></comment>
+                <field id="enabled" translate="label" type="select" sortOrder="10"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Send Escalation Emails</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="recipients" translate="label comment" type="textarea" sortOrder="20"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Recipients</label>
+                    <comment><![CDATA[One email address per line. Invalid addresses are ignored.]]></comment>
+                    <depends><field id="enabled">1</field></depends>
+                </field>
+                <field id="severity_threshold" translate="label comment" type="select" sortOrder="30"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Escalate From Severity</label>
+                    <source_model>DeployEcommerce\Inbox\Model\Config\Source\Severity</source_model>
+                    <comment><![CDATA[Set this high. Escalating everything trains people to ignore the emails.]]></comment>
+                    <depends><field id="enabled">1</field></depends>
+                </field>
+                <field id="period_hours" translate="label comment" type="text" sortOrder="40"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Reporting Period (hours)</label>
+                    <validate>required-entry validate-digits validate-digits-range digits-range-1-168</validate>
+                    <comment><![CDATA[Should match how often the digest runs, or messages will be reported twice or missed.]]></comment>
+                    <depends><field id="enabled">1</field></depends>
+                </field>
+                <field id="sender" translate="label" type="select" sortOrder="50"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Sender</label>
+                    <source_model>Magento\Config\Model\Config\Source\Email\Identity</source_model>
+                    <depends><field id="enabled">1</field></depends>
+                </field>
+            </group>
+
+            <group id="webhook" translate="label" type="text" sortOrder="60"
+                   showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Outbound Forwarding</label>
+                <field id="enabled" translate="label comment" type="select" sortOrder="10"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Forward Messages To An Endpoint</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[Sends qualifying messages to an HTTP endpoint. Delivery is queued and happens in the background, never while the message is being recorded. Requires the queue consumer to be running.]]></comment>
+                </field>
+                <field id="endpoint_url" translate="label comment" type="text" sortOrder="20"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Endpoint URL</label>
+                    <backend_model>DeployEcommerce\Inbox\Model\Config\Backend\WebhookEndpoint</backend_model>
+                    <comment><![CDATA[Must be <code>https</code> on port 443, and must be a hostname that resolves to a public address. Private, loopback and cloud-metadata addresses are refused.]]></comment>
+                    <depends><field id="enabled">1</field></depends>
+                </field>
+                <field id="signing_secret" translate="label comment" type="obscure" sortOrder="30"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Signing Secret</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    <comment><![CDATA[Shared with the receiver, which uses it to verify the signature header. The secret itself is never transmitted. Stored encrypted.]]></comment>
+                    <depends><field id="enabled">1</field></depends>
+                </field>
+                <field id="severity_threshold" translate="label comment" type="select" sortOrder="40"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Forward From Severity</label>
+                    <source_model>DeployEcommerce\Inbox\Model\Config\Source\Severity</source_model>
+                    <comment><![CDATA[Only messages at or above this severity are forwarded.]]></comment>
+                    <depends><field id="enabled">1</field></depends>
+                </field>
+                <field id="source_allowlist" translate="label comment" type="textarea" sortOrder="50"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Only Forward These Sources</label>
+                    <comment><![CDATA[One source per line. Leave empty to forward every source.]]></comment>
+                    <depends><field id="enabled">1</field></depends>
+                </field>
+                <field id="tag_allowlist" translate="label comment" type="textarea" sortOrder="60"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Only Forward These Tags</label>
+                    <comment><![CDATA[One tag per line. A message is forwarded if it carries any of them. Leave empty to ignore tags.]]></comment>
+                    <depends><field id="enabled">1</field></depends>
+                </field>
+                <field id="include_body" translate="label comment" type="select" sortOrder="70"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Include Message Bodies</label>
+                    <source_model>DeployEcommerce\Inbox\Model\Config\Source\BodyPolicy</source_model>
+                    <comment><![CDATA[<strong>Sending bodies is a data-protection decision, not just a technical one.</strong> Bodies carry third-party payloads that often contain personal data. Forwarding them makes the endpoint operator a processor, requiring a written agreement, and their retention is outside this site's control and outside the purge policy below. Credentials are masked before storage, but truncation is not redaction. Metadata alone is enough to route alerts.]]></comment>
+                    <depends><field id="enabled">1</field></depends>
+                </field>
+                <field id="body_max_bytes" translate="label comment" type="text" sortOrder="80"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Forwarded Body Size (bytes)</label>
+                    <validate>validate-digits validate-digits-range digits-range-256-65536</validate>
+                    <depends>
+                        <field id="enabled">1</field>
+                        <field id="include_body">truncated</field>
+                    </depends>
+                </field>
+                <field id="auth_header_name" translate="label comment" type="text" sortOrder="90"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Additional Auth Header Name</label>
+                    <comment><![CDATA[Optional, for receivers behind a gateway that requires its own header. The signature is sent regardless.]]></comment>
+                    <depends><field id="enabled">1</field></depends>
+                </field>
+                <field id="auth_header_value" translate="label" type="obscure" sortOrder="100"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Additional Auth Header Value</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    <depends><field id="enabled">1</field></depends>
+                </field>
+                <field id="connect_timeout" translate="label" type="text" sortOrder="110"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Connect Timeout (seconds)</label>
+                    <validate>required-entry validate-digits validate-digits-range digits-range-1-10</validate>
+                    <depends><field id="enabled">1</field></depends>
+                </field>
+                <field id="timeout" translate="label" type="text" sortOrder="120"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Request Timeout (seconds)</label>
+                    <validate>required-entry validate-digits validate-digits-range digits-range-1-30</validate>
+                    <depends><field id="enabled">1</field></depends>
+                </field>
+                <field id="max_attempts" translate="label comment" type="text" sortOrder="130"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Maximum Delivery Attempts</label>
+                    <validate>required-entry validate-digits validate-digits-range digits-range-1-10</validate>
+                    <comment><![CDATA[Retries use exponential backoff with jitter. Six attempts spans roughly six hours.]]></comment>
+                    <depends><field id="enabled">1</field></depends>
+                </field>
+                <field id="retry_base_delay" translate="label" type="text" sortOrder="140"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Retry Base Delay (seconds)</label>
+                    <validate>required-entry validate-digits validate-digits-range digits-range-30-3600</validate>
+                    <depends><field id="enabled">1</field></depends>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>
